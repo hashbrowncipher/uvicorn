@@ -198,6 +198,7 @@ class H11Protocol(asyncio.Protocol):
                     "raw_path": raw_path,
                     "query_string": query_string,
                     "headers": self.headers,
+                    "transport": self.transport
                 }
 
                 should_upgrade = False
