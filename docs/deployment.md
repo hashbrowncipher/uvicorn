@@ -35,30 +35,42 @@ Options:
   --fd INTEGER                    Bind to socket from this file descriptor.
   --reload                        Enable auto-reload.
   --reload-dir TEXT               Set reload directories explicitly, instead
-                                  of using 'sys.path'.
-  --workers INTEGER               Number of worker processes. Not valid with
-                                  --reload.
-  --loop [auto|asyncio|uvloop]    Event loop implementation.  [default: auto]
+                                  of using the current working directory.
+  --workers INTEGER               Number of worker processes. Defaults to the
+                                  $WEB_CONCURRENCY environment variable if
+                                  available. Not valid with --reload.
+  --loop [auto|asyncio|uvloop|iocp]
+                                  Event loop implementation.  [default: auto]
   --http [auto|h11|httptools]     HTTP protocol implementation.  [default:
                                   auto]
-  --ws [none|auto|websockets|wsproto]
+  --ws [auto|none|websockets|wsproto]
                                   WebSocket protocol implementation.
                                   [default: auto]
   --lifespan [auto|on|off]        Lifespan implementation.  [default: auto]
-  --interface [auto|asgi3|agsi2|wsgi]
+  --interface [auto|asgi3|asgi2|wsgi]
                                   Select ASGI3, ASGI2, or WSGI as the
-                                  application interface.
-  --log-level [critical|error|warning|info|debug]
-                                  Log level.  [default: info]
-  --no-access-log                 Disable access log.
-  --proxy-headers                 Use X-Forwarded-Proto, X-Forwarded-For,
-                                  X-Forwarded-Port to populate remote address
-                                  info.
+                                  application interface.  [default: auto]
+  --env-file PATH                 Environment configuration file.
+  --log-config PATH               Logging configuration file.
+  --log-level [critical|error|warning|info|debug|trace]
+                                  Log level. [default: info]
+  --access-log / --no-access-log  Enable/Disable access log.
+  --use-colors / --no-use-colors  Enable/Disable colorized logging.
+  --proxy-headers / --no-proxy-headers
+                                  Enable/Disable X-Forwarded-Proto,
+                                  X-Forwarded-For, X-Forwarded-Port to
+                                  populate remote address info.
+  --forwarded-allow-ips TEXT      Comma seperated list of IPs to trust with
+                                  proxy headers. Defaults to the
+                                  $FORWARDED_ALLOW_IPS environment variable if
+                                  available, or '127.0.0.1'.
   --root-path TEXT                Set the ASGI 'root_path' for applications
                                   submounted below a given URL path.
   --limit-concurrency INTEGER     Maximum number of concurrent connections or
                                   tasks to allow, before issuing HTTP 503
                                   responses.
+  --backlog INTEGER               Maximum number of connections to hold in
+                                  backlog
   --limit-max-requests INTEGER    Maximum number of requests to service before
                                   terminating the process.
   --timeout-keep-alive INTEGER    Close Keep-Alive connections if no new data
@@ -73,6 +85,8 @@ Options:
   --ssl-ca-certs TEXT             CA certificates file
   --ssl-ciphers TEXT              Ciphers to use (see stdlib ssl module's)
                                   [default: TLSv1]
+  --header TEXT                   Specify custom default HTTP response headers
+                                  as a Name:Value pair
   --help                          Show this message and exit.
 ```
 
@@ -81,6 +95,8 @@ See the [settings documentation](settings.md) for more details on the supported 
 ## Running programmatically
 
 To run directly from within a Python program, you should use `uvicorn.run(app, **config)`. For example:
+
+**example.py**:
 
 ```python
 import uvicorn
@@ -91,10 +107,20 @@ class App:
 app = App()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info", reload=True)
+    uvicorn.run("example:app", host="127.0.0.1", port=5000, log_level="info")
 ```
 
 The set of configuration options is the same as for the command line tool.
+
+Note that the application instance itself *can* be passed instead of the app
+import string.
+
+```python
+uvicorn.run(app, host="127.0.0.1", port=5000, log_level="info")
+```
+
+However, this style only works if you are not using multiprocessing (`workers=NUM`)
+or reloading (`reload=True`), so we recommend using the import string style.
 
 ## Using a process manager
 

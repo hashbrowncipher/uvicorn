@@ -1,4 +1,3 @@
-import logging
 import socket
 
 import pytest
@@ -6,19 +5,20 @@ import pytest
 from uvicorn import protocols
 from uvicorn.config import Config
 from uvicorn.middleware.debug import DebugMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from uvicorn.middleware.wsgi import WSGIMiddleware
 
 
 async def asgi_app():
-    pass
+    pass  # pragma: nocover
 
 
 def wsgi_app():
-    pass
+    pass  # pragma: nocover
 
 
 def test_debug_app():
-    config = Config(app=asgi_app, debug=True)
+    config = Config(app=asgi_app, debug=True, proxy_headers=False)
     config.load()
 
     assert config.debug is True
@@ -26,7 +26,7 @@ def test_debug_app():
 
 
 def test_wsgi_app():
-    config = Config(app=wsgi_app, interface="wsgi")
+    config = Config(app=wsgi_app, interface="wsgi", proxy_headers=False)
     config.load()
 
     assert isinstance(config.loaded_app, WSGIMiddleware)
@@ -34,10 +34,11 @@ def test_wsgi_app():
 
 
 def test_proxy_headers():
-    config = Config(app=asgi_app, proxy_headers=True)
+    config = Config(app=asgi_app)
     config.load()
 
     assert config.proxy_headers is True
+    assert isinstance(config.loaded_app, ProxyHeadersMiddleware)
 
 
 def test_app_unimportable():
@@ -50,14 +51,6 @@ def test_concrete_http_class():
     config = Config(app=asgi_app, http=protocols.http.h11_impl.H11Protocol)
     config.load()
     assert config.http_protocol_class is protocols.http.h11_impl.H11Protocol
-
-
-def test_logger():
-    logger = logging.getLogger("just-for-tests")
-    config = Config(app=asgi_app, logger=logger)
-    config.load()
-
-    assert config.logger is logger
 
 
 def test_socket_bind():
