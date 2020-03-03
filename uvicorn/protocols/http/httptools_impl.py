@@ -224,6 +224,7 @@ class HttpToolsProtocol(asyncio.Protocol):
             "raw_path": raw_path,
             "query_string": parsed_url.query if parsed_url.query else b"",
             "headers": self.headers,
+            "transport": self.transport
         }
 
     def on_header(self, name: bytes, value: bytes):
